@@ -1,0 +1,101 @@
+import java.io.IOException;
+import java.util.*;
+
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.conf.*;
+import org.apache.hadoop.io.*;
+import org.apache.hadoop.mapreduce.*;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
+
+public class CoverageRatio {
+    
+    public static class Map extends Mapper<LongWritable, Text, Text, Text> {
+        private Text chrPos = new Text();
+        private Text coverageLabel = new Text();
+        
+        public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
+            String line = value.toString();
+            String delimiter = "\\t";
+            String[] strArray = line.split(delimiter);
+            
+            chrPos.set(strArray[0]);
+            coverageLabel.set(strArray[1]);
+            context.write(chrPos,coverageLabel);
+        }
+    }
+    
+    public static class Reduce extends Reducer<LongWritable, Text, Text, FloatWritable> {
+        private Text chrPos = new Text();
+        private FloatWritable ratio = new FloatWritable();
+        
+        public void reduce(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
+            
+            
+            
+            float ratio;
+            int numerator_coverage;
+            int denominator_coverage;
+            
+            String line = value.toString();
+            String tab_delimiter = "\\t";
+            String[] strArray = line.split(tab_delimiter);
+            
+            chrPos.set(strArray[0]);
+            
+            String dash_delimiter = "-";
+            String[] pairedCoverageArray = strArray[1].split(dash_delimiter);
+            
+            if(pairedCoverageArray.length < 2){
+                // Do nothing: This is not a valid chr:pos with both numerator and coverage data
+            }else{
+                String colon_delimiter = ":";
+                String numerator = "n";
+                String[] coverageArrayOne = pairedCoverageArray[0].split(colon_delimiter);
+                String[] coverageArrayTwo = pairedCoverageArray[1].split(colon_delimiter);
+                
+                if(coverageArrayOne[1].compareToIgnoreCase(numerator) == 0){
+                    numerator_coverage = Integer.parseInt(coverageArrayOne[0]);
+                    denominator_coverage = Integer.parseInt(coverageArrayTwo[0]);
+                }else{
+                    denominator_coverage = Integer.parseInt(coverageArrayOne[0]);
+                    numerator_coverage = Integer.parseInt(coverageArrayTwo[0]);
+                }
+                if(numerator_coverage > 0 && denominator_coverage > 0){
+                    ratio = ((float)numerator_coverage/(float)denominator_coverage);
+                    System.out.println(ratio);
+                    context.write(chrPos,new FloatWritable(ratio));
+                }
+            }
+        }
+    }
+
+    public static void main(String[] args) throws Exception {
+        
+        if (args.length != 2) {
+            System.err.println("Usage: CoverageRatio <input file1> <input file2> <output path>");
+            System.exit(-1);
+        }
+        
+        Job job = new Job();
+        job.setJarByClass(CoverageRatio.class);
+        job.setJobName("CoverageRatio");
+        
+        FileInputFormat.addInputPath(job, new Path(args[0]));
+        // FileInputFormat.addInputPath(job, new Path(args[1]));
+        FileOutputFormat.setOutputPath(job, new Path(args[1]));
+        
+        job.setInputFormatClass(TextInputFormat.class);
+        job.setOutputFormatClass(TextOutputFormat.class);
+        
+        job.setOutputKeyClass(Text.class);
+        job.setOutputValueClass(Text.class);
+        
+        job.setMapperClass(Map.class);
+        job.setNumReduceTasks(0);
+        
+        System.exit(job.waitForCompletion(true) ? 0 : 1);
+    }
+}
