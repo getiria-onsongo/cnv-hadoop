@@ -10,6 +10,8 @@ hadoop fs -put raw_data/sample_bwa_no_dup.txt fs_data/sample_bwa_no_dup.txt
 hadoop fs -put raw_data/sample_bowtie.txt fs_data/sample_bowtie.txt
 hadoop fs -put raw_data/sample_bwa.txt fs_data/sample_bwa.txt
 
+hadoop fs -rm fs_data/temp.txt
+hadoop fs -put raw_data/temp.txt fs_data/temp.txt
 
 # Compile Class to Tag data and create Jar file
 cd TagData/
@@ -36,7 +38,11 @@ hadoop jar CoverageRatio/CoverageRatio.jar CoverageRatio fs_output/sample_bwa_no
 hadoop jar CoverageRatio/CoverageRatio.jar CoverageRatio fs_output/control_bowtie fs_output/control_bwa fs_output/ControlBowtieBwaOut
 hadoop jar CoverageRatio/CoverageRatio.jar CoverageRatio fs_output/sample_bowtie fs_output/sample_bwa fs_output/SampleBowtieBwaOut
 
+hadoop fs -rm -r fs_output/tempOut
+hadoop jar SecondarySortTextPair/SecondarySortTextPair.jar SecondarySortTextPair fs_data/temp.txt fs_output/tempOut
 
+hadoop fs -rm -r fs_output/tempOut2
+hadoop jar SecondarySortTextIntPair/SecondarySortTextIntPair.jar SecondarySortTextIntPair fs_data/temp.txt fs_output/tempOut2
 
 --- HERE
 

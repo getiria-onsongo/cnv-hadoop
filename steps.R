@@ -51,3 +51,31 @@ hadoop jar TagData/TagData.jar TagData onsongo/temp.txt TagDataOut c
 # Check to see if result are there
 hadoop fs -ls  TagDataOut
 
+
+# SECONDARY SORT
+- Assume we want to sort <year temperature> by temperature (secondary sort)
+
+- Map Reduce framework automatically sorts on key. We can create a composite key but then have the partitioner
+to partition by the year part of the key. This will guarantee records for the same year go to the same
+reducer.
+
+- Sending records for the same year to the same reducer will not guarantee the secondary sort because
+the reducer groups by key and our composite key is of (year,temp). We will need to change how the
+grouping is done.
+
+- In summary, we need the following:
+
+1) Make the key be composite of natural key and natural value
+2) The sort comparator should order by the composite key
+3) The partitioner and grouping comparator for the composite key should consider only the narural key for
+grouping and partitioning
+
+
+
+
+
+
+
+
+
+
