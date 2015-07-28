@@ -80,40 +80,51 @@ public class GetRandomReferences {
 		return result;
 	}
 	
-	
-
-	// HERE 
-	public static void createReferencePileup(String filename, String output, ArrayList<String> geneArrayList){
-		// The name of the file to open.
-        String fileName = "temp.txt";
-		
+	public static void createReferencePileup(ReferenceObject refObj, String output){	
         try {
             // Assume default encoding.
-            FileWriter fileWriter =
-			new FileWriter(fileName);
+            FileWriter fileWriter = new FileWriter(output);
 			
             // Always wrap FileWriter in BufferedWriter.
-            BufferedWriter bufferedWriter =
-			new BufferedWriter(fileWriter);
+            BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
 			
-            // Note that write() does not automatically
-            // append a newline character.
-            bufferedWriter.write("Hello there,");
-            bufferedWriter.write(" here is some text.");
-            bufferedWriter.newLine();
-            bufferedWriter.write("We are writing");
-            bufferedWriter.write(" the text to the file.");
+			int numGenes = refObj.getGeneArrayList().size();
+			StringBuilder outputSB = new StringBuilder();
 			
-            // Always close files.
+			for(int i=0; i<numGenes; i++){
+				String gene = refObj.getGeneArrayList().get(i);
+				String chr = refObj.getChrArrayList().get(i);
+				int start = refObj.getStartArrayList().get(i).intValue();
+				int end = refObj.getEndArrayList().get(i).intValue();
+			
+				for(int j=start; j<(end+1); j++){
+					// Create exon contig
+					outputSB.append(chr); 
+					outputSB.append(":");
+					outputSB.append(start);
+					outputSB.append("-");
+					outputSB.append(end);
+					
+					outputSB.append("\t");
+					outputSB.append(gene);
+					
+					outputSB.append("\t");
+					outputSB.append(chr);
+					
+					outputSB.append("\t");
+					outputSB.append(j);
+					outputSB.append("\n");
+				}
+			}
+            bufferedWriter.write(outputSB.toString());
+			
+			// Always close files.
             bufferedWriter.close();
         }
         catch(IOException ex) {
-            System.out.println(
-							   "Error writing to file '"
-							   + fileName + "'");
-            // Or we could just do this:
-            // ex.printStackTrace();
+            System.out.println("Error writing to file '" + output + "'");
         }
+		 
 	}
 	
 	
@@ -126,7 +137,7 @@ public class GetRandomReferences {
 	private static void printReferenceObject(ReferenceObject refObj){
 		int cnt = refObj.getGeneArrayList().size();
 		
-		for(int i=0; i<cnt; i++){
+		for(int i=0; i<cnt; i++){			
 			System.out.print(refObj.getGeneArrayList().get(i));
 			System.out.print("\t");
 			System.out.print(refObj.getChrArrayList().get(i));
@@ -158,8 +169,8 @@ public class GetRandomReferences {
 		// Create exon reference object that contains <gene_symbol, chr, start, end>
 		ReferenceObject randomSubsetObjects = getReferenceObject(referencesArray,fileName);
 		
-		// Print just to confirm we are getting what we expect
-		printReferenceObject(randomSubsetObjects);
+		// Generate pileup
+		createReferencePileup(randomSubsetObjects,outputFileName);
 		
 	}
 }

@@ -44,6 +44,9 @@ hadoop jar SecondarySortTextPair/SecondarySortTextPair.jar SecondarySortTextPair
 hadoop fs -rm -r fs_output/tempOut2
 hadoop jar SecondarySortTextIntPair/SecondarySortTextIntPair.jar SecondarySortTextIntPair fs_data/temp.txt fs_output/tempOut2
 
+javac *.java
+java GetRandomReferences temp.txt out.txt 3
+
 --- HERE
 
 
