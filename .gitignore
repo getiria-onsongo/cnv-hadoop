@@ -1,4 +1,7 @@
-out.txt
+misc/*
+*.log
+*.out
+*.txt
 \#*
 *.bak
 *~

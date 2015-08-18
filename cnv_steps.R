@@ -2,6 +2,19 @@
 hstart
 
 # Upload files to Hadoop file System
+
+# CREATE TEST FILES SMALL ENOUGH TO TEST IMPLEMENTATION
+
+cut -f3,4 out.txt > temp1.txt
+
+awk -F, '{$(NF+1)=40;}1' OFS="\t" temp1.txt > control_bwa_no_dup.txt
+awk -F, '{$(NF+1)=40;}1' OFS="\t" temp1.txt > control_bowtie.txt
+awk -F, '{$(NF+1)=40;}1' OFS="\t" temp1.txt > control_bwa.txt
+
+awk -F, '{$(NF+1)=20;}1' OFS="\t" temp1.txt > sample_bwa_no_dup.txt
+awk -F, '{$(NF+1)=20;}1' OFS="\t" temp1.txt > sample_bowtie.txt
+awk -F, '{$(NF+1)=20;}1' OFS="\t" temp1.txt > sample_bwa.txt
+
 hadoop fs -put raw_data/control_bwa_no_dup.txt fs_data/control_bwa_no_dup.txt
 hadoop fs -put raw_data/control_bowtie.txt fs_data/control_bowtie.txt
 hadoop fs -put raw_data/control_bwa.txt fs_data/control_bwa.txt
@@ -10,8 +23,92 @@ hadoop fs -put raw_data/sample_bwa_no_dup.txt fs_data/sample_bwa_no_dup.txt
 hadoop fs -put raw_data/sample_bowtie.txt fs_data/sample_bowtie.txt
 hadoop fs -put raw_data/sample_bwa.txt fs_data/sample_bwa.txt
 
-hadoop fs -rm fs_data/temp.txt
-hadoop fs -put raw_data/temp.txt fs_data/temp.txt
+# Create reference pileup for 3 of the 11 references
+# NOTE: Unlike in MySQL where we had to join a pileup table and the reference table (tso_reference),
+# here we will generate the pileup table for references from tso_reference directly. No need to
+# pre-generate the pileup table.
+#
+#
+# SINGLE MACHINE TASK
+javac *.java
+java GetRandomReferences raw_data/tso_reference.txt raw_data/reference_pileup.txt 3
+
+
+# JOIN REFERENCE WITH SAMPLE
+
+pig -f Pig/join_coverage_reference.pig -param cov_input='/Users/onson001/Desktop/hadoop/fs_data/sample_bwa_no_dup.txt' \
+-param ref_input='/Users/onson001/Desktop/hadoop/fs_data/reference_pileup.txt' \
+-param output='/Users/onson001/Desktop/hadoop/fs_data/sample_reference_pileup'
+
+
+hadoop fs -getmerge /Users/onson001/Desktop/hadoop/fs_data/sample_reference_pileup /Users/onson001/Desktop/hadoop/fs_data/sample_reference_pileup.txt
+
+# JOIN REFERENCE WITH CONTROL
+pig -f Pig/join_coverage_reference.pig -param cov_input='/Users/onson001/Desktop/hadoop/fs_data/control_bwa_no_dup.txt' \
+-param ref_input='/Users/onson001/Desktop/hadoop/fs_data/reference_pileup.txt' \
+-param output='/Users/onson001/Desktop/hadoop/fs_data/control_reference_pileup'
+
+hadoop fs -getmerge /Users/onson001/Desktop/hadoop/fs_data/control_reference_pileup /Users/onson001/Desktop/hadoop/fs_data/control_reference_pileup.txt
+
+# Find median reference coverage for sample
+java FindMedian /Users/onson001/Desktop/hadoop/fs_data/sample_reference_pileup.txt /Users/onson001/Desktop/hadoop/fs_data/sample_reference_median.txt
+
+# Find median reference coverage for control
+java FindMedian /Users/onson001/Desktop/hadoop/fs_data/control_reference_pileup.txt /Users/onson001/Desktop/hadoop/fs_data/control_reference_median.txt
+
+
+-- HERE
+
+
+
+----
+
+# NEXT: SEND REFERENCE MEDIAN COVERAGE TO DISTRIBUTED CACHE AND THEN PROCEED TO a) AND b) BELOW
+
+# a) Find within coverage using these 3 references (no_dup)
+# b) Find sample/control using the coverage in a) i.e., ratio of ratios
+mysql --socket=$BASE/thesock -u root cnv < create_tables_part1.sql
+
+# Combine ratio and bowtie/bwa
+Need a new function here since we do not have the luxury of MySQL joins
+
+# Normalize data
+# a) Find average coverage across genome between 0.5 and 2.0
+#           i) all_ratios = 0.5 < ratio < 2.0)
+#           ii) avg_log2 = mean(log2(all_ratios))
+# b) Normalize in log 2 space
+#           i) normalized_value = 2^(log2(value) - avg_log2)
+# NOTE: Only ratio is normalized
+
+R CMD BATCH normalize_coverage.R
+
+
+# Rolling mean (window = 200)
+# if(window_length >= gene_length/4)
+#   window_length = round(gene_length/4)
+# if(window_length < 1)
+#     window_length = 1
+# NOTE: smoothing is done on both ratio and bowtie/bwa
+R CMD BATCH smooth_coverage.R
+
+
+*** PLOT TO SEE IF EVERYTHING IS WORKING
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # Compile Class to Tag data and create Jar file
 cd TagData/
@@ -22,6 +119,15 @@ jar cf TagData.jar *.class
 # Tag pileup data
 # Data tagged with n will be numerator while data tagged as d will be denominator in a division
 
+cd /Users/onson001/Desktop/hadoop
+
+hadoop fs -rm -r fs_output/control_bwa_no_dup
+hadoop fs -rm -r fs_output/control_bowtie
+hadoop fs -rm -r fs_output/control_bwa
+hadoop fs -rm -r fs_output/sample_bwa_no_dup
+hadoop fs -rm -r fs_output/sample_bowtie
+hadoop fs -rm -r fs_output/sample_bwa
+
 hadoop jar TagData/TagData.jar TagData fs_data/control_bwa_no_dup.txt fs_output/control_bwa_no_dup d
 hadoop jar TagData/TagData.jar TagData fs_data/control_bowtie.txt fs_output/control_bowtie n
 hadoop jar TagData/TagData.jar TagData fs_data/control_bwa.txt fs_output/control_bwa d
@@ -31,7 +137,9 @@ hadoop jar TagData/TagData.jar TagData fs_data/sample_bowtie.txt fs_output/sampl
 hadoop jar TagData/TagData.jar TagData fs_data/sample_bwa.txt fs_output/sample_bwa d
 
 # Delete output folder if it exists
-hadoop fs -rm -r fs_output/outputFolder
+hadoop fs -rm -r fs_output/SampleOverControlOut
+hadoop fs -rm -r fs_output/ControlBowtieBwaOut
+hadoop fs -rm -r fs_output/SampleBowtieBwaOut
 
 # Calculate ratios
 hadoop jar CoverageRatio/CoverageRatio.jar CoverageRatio fs_output/sample_bwa_no_dup fs_output/control_bwa_no_dup fs_output/SampleOverControlOut
@@ -44,11 +152,15 @@ hadoop jar SecondarySortTextPair/SecondarySortTextPair.jar SecondarySortTextPair
 hadoop fs -rm -r fs_output/tempOut2
 hadoop jar SecondarySortTextIntPair/SecondarySortTextIntPair.jar SecondarySortTextIntPair fs_data/temp.txt fs_output/tempOut2
 
-javac *.java
-java GetRandomReferences temp.txt out.txt 3
+cd /Users/onson001/Desktop/hadoop/Pig
 
---- HERE
+pig -f window_coverage.pig -param cov_data_input='/Users/onson001/Desktop/hadoop/onsongo/temp_cov_data.txt' \
+-param window_data_input='/Users/onson001/Desktop/hadoop/onsongo/temp_window_data.txt' \
+-param window_coverage_output='/Users/onson001/Desktop/hadoop/onsongo/window_coverage'
 
+hadoop fs -rm -r fs_output/WithinRatioOut
+
+dump A;
 
 
 
@@ -69,3 +181,42 @@ hadoop jar TagData/TagData.jar TagData onsongo/temp.txt TagDataOut c
 # Check to see if result are there
 hadoop fs -ls  TagDataOut
 
+
+
+
+
+
+
+# FAILED ATTEMPT AT USING DISTRIBUTED CACHE
+
+# Copy files to HDFS so we can set it up for distibuted cache
+hadoop fs -copyFromLocal raw_data/reference_pileup.txt fs_data/reference_pileup.txt
+
+-- HERE
+
+# PUT reference_pileup.txt INTO DISTRIBUTED CACHE SO WE DON'T NEED TO DISTRIBUTE IT
+
+#2. Setup the application's JobConf:
+
+// Mind the # sign after the absolute file location.
+// You will be using the name after the # sign as your
+// file name in your Mapper/Reducer
+JobConf job = new JobConf();
+DistributedCache.addCacheFile(new URI("fs_data/reference_pileup.txt#reference_pileup.txt"),job);
+
+
+
+3. Use the cached files in the Mapper
+or Reducer:
+
+public static class MapClass extends MapReduceBase
+implements Mapper<K, V, K, V> {
+    
+    private Path[] localArchives;
+    private Path[] localFiles;
+    
+    public void configure(JobConf job) {
+        // Get the cached archives/files
+        localArchives = DistributedCache.getLocalCacheArchives(job);
+        localFiles = DistributedCache.getLocalCacheFiles(job);
+    }

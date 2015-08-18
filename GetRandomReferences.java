@@ -133,6 +133,12 @@ public class GetRandomReferences {
 			System.out.println(string);
 		}
 	}
+    
+    private static void printStringSetList(ArrayList<String> strings){
+        for (String string : strings) {
+            System.out.println(string);
+        }
+    }
 	
 	private static void printReferenceObject(ReferenceObject refObj){
 		int cnt = refObj.getGeneArrayList().size();

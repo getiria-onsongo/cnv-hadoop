@@ -32,8 +32,28 @@ hadoop fs -put test.txt onsongo/test.txt
 hadoop fs -put pah_pileup.txt onsongo/pah_pileup.txt
 hadoop fs -put raw_data/temp.txt onsongo/temp.txt
 
+cd /Users/onson001/Desktop/hadoop/misc
 
-# Check to confirm it was uploaded 
+perl -i.bak -pe 's/\r/\n/g' temp_cov_data.txt
+perl -i.bak -pe 's/\r/\n/g' temp_window_data.txt
+cd ..
+hadoop fs -put misc/temp_cov_data.txt onsongo/temp_cov_data.txt
+hadoop fs -put misc/temp_window_data.txt onsongo/temp_window_data.txt
+
+# Download Pig jar untar it and add the following line to bash profile
+alias pig="/Users/onson001/Desktop/pig-0.15.0/bin/pig -x local"
+
+cd /Users/onson001/Desktop/hadoop/Pig
+pig
+REGISTER /Users/onson001/Desktop/hadoop/piggybank.jar;
+cov_data = LOAD '/Users/onson001/Desktop/hadoop/onsongo/temp_cov_data.txt' USING PigStorage('\t') AS (chr:chararray, chr_pos:int, coverage:int);
+window_data = LOAD '/Users/onson001/Desktop/hadoop/onsongo/temp_window_data.txt' USING PigStorage('\t') AS (window_id:chararray, chr:chararray, chr_pos:int);
+dump cov_data;
+dump window_data;
+A = JOIN window_data BY (chr,chr_pos) LEFT OUTER, cov_data BY (chr,chr_pos);
+dump A;
+
+# Check to confirm it was uploaded
 hadoop fs -ls onsongo
 
 # Delete output folder if it exists
