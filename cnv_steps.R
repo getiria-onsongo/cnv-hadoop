@@ -40,7 +40,6 @@ pig -f Pig/join_coverage_reference.pig -param cov_input='/Users/onson001/Desktop
 -param ref_input='/Users/onson001/Desktop/hadoop/fs_data/reference_pileup.txt' \
 -param output='/Users/onson001/Desktop/hadoop/fs_data/sample_reference_pileup'
 
-
 hadoop fs -getmerge /Users/onson001/Desktop/hadoop/fs_data/sample_reference_pileup /Users/onson001/Desktop/hadoop/fs_data/sample_reference_pileup.txt
 
 # JOIN REFERENCE WITH CONTROL
@@ -56,10 +55,16 @@ java FindMedian /Users/onson001/Desktop/hadoop/fs_data/sample_reference_pileup.t
 # Find median reference coverage for control
 java FindMedian /Users/onson001/Desktop/hadoop/fs_data/control_reference_pileup.txt /Users/onson001/Desktop/hadoop/fs_data/control_reference_median.txt
 
+# Hadoop requires files in distributed cache be publicly accessible so I am copying these files to /tmp
+cp /Users/onson001/Desktop/hadoop/fs_data/sample_reference_median.txt /tmp/sample_reference_median.txt
+cp /Users/onson001/Desktop/hadoop/fs_data/control_reference_median.txt /tmp/control_reference_median.txt
 
 -- HERE
 
+// FIGURE OUT HOW TO FIND PRINT STATEMENTS
 
+hadoop fs -rm -r fs_output/WithinRatioOut
+hadoop jar WithinRatio/WithinRatio.jar WithinRatio fs_data/sample_bwa_no_dup.txt fs_output/WithinRatioOut /tmp/sample_reference_median.txt
 
 ----
 
@@ -202,7 +207,7 @@ hadoop fs -copyFromLocal raw_data/reference_pileup.txt fs_data/reference_pileup.
 // You will be using the name after the # sign as your
 // file name in your Mapper/Reducer
 JobConf job = new JobConf();
-DistributedCache.addCacheFile(new URI("fs_data/reference_pileup.txt#reference_pileup.txt"),job);
+DistributedCache.addCacheFile(new URI("fs_data/reference_pileup.txtreference_pileup_path"),job);
 
 
 
