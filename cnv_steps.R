@@ -59,19 +59,23 @@ java FindMedian /Users/onson001/Desktop/hadoop/fs_data/control_reference_pileup.
 cp /Users/onson001/Desktop/hadoop/fs_data/sample_reference_median.txt /tmp/sample_reference_median.txt
 cp /Users/onson001/Desktop/hadoop/fs_data/control_reference_median.txt /tmp/control_reference_median.txt
 
+# Compute within sample ratio
+hadoop fs -rm -r fs_output/WithinRatioOutSample
+hadoop jar WithinRatio/WithinRatio.jar WithinRatio fs_data/sample_bwa_no_dup.txt fs_output/WithinRatioOutSample /tmp/sample_reference_median.txt
+
+hadoop fs -rm -r fs_output/WithinRatioOutControl
+hadoop jar WithinRatio/WithinRatio.jar WithinRatio fs_data/control_bwa_no_dup.txt fs_output/WithinRatioOutControl /tmp/control_reference_median.txt
+
+
 -- HERE
 
-// FIGURE OUT HOW TO FIND PRINT STATEMENTS
+#  Find sample/control using the coverage in a) i.e., ratio of ratios (good task for Pig)
 
-hadoop fs -rm -r fs_output/WithinRatioOut
-hadoop jar WithinRatio/WithinRatio.jar WithinRatio fs_data/sample_bwa_no_dup.txt fs_output/WithinRatioOut /tmp/sample_reference_median.txt
 
-----
 
-# NEXT: SEND REFERENCE MEDIAN COVERAGE TO DISTRIBUTED CACHE AND THEN PROCEED TO a) AND b) BELOW
 
-# a) Find within coverage using these 3 references (no_dup)
-# b) Find sample/control using the coverage in a) i.e., ratio of ratios
+
+
 mysql --socket=$BASE/thesock -u root cnv < create_tables_part1.sql
 
 # Combine ratio and bowtie/bwa

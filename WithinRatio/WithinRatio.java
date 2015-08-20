@@ -37,6 +37,7 @@ public class WithinRatio {
   public static class Reduce extends Reducer<Text, IntWritable, Text, FloatWritable> {
 
         private FloatWritable ratio = new FloatWritable();
+        private Text newKey = new Text();
       
         public void reduce(Text key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
             
@@ -63,25 +64,21 @@ public class WithinRatio {
                 bufferedReader.close();
             }
             catch(FileNotFoundException ex) {
-                System.out.println("Unable to open file '" + filename + "'");
+                LOG.fatal("Unable to open file '" + filename + "'");
             }
             catch(IOException ex) {
-                System.out.println("Error reading file '" + filename + "'");
+                LOG.fatal("Error reading file '" + filename + "'");
                 // Or we could just do this:
                 // ex.printStackTrace();
             }
             
-            LOG.info("\n");
-            LOG.info(medianCoverage[0][0]);
-            LOG.info(medianCoverage[0][1]);
-            LOG.info("\n");
-            
             for (IntWritable value : values) {
                 float ratio;
-                
-                ratio = ((float)value.get() / (float)2);
-                context.write(key,new FloatWritable(ratio));
-                
+                for(int i=0; i<3; i++){
+                    newKey.set(medianCoverage[i][0] + "," + key.toString());
+                    ratio = ((float)value.get() / (float) Integer.parseInt(medianCoverage[i][1]));
+                    context.write(newKey,new FloatWritable(ratio));
+                }
             }
             
         }
@@ -112,7 +109,9 @@ public class WithinRatio {
         referencePileupLink.append(reference_pileup_path);
         referencePileupLink.append("#reference_pileup_path");
         String link = referencePileupLink.toString();
+        
         LOG.info(link);
+        LOG.info("Put reference median coverage to distributed cache");
         DistributedCache.addCacheFile(new URI(link),conf);
         
         job.setInputFormatClass(TextInputFormat.class);
