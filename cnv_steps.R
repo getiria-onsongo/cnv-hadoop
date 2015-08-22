@@ -66,20 +66,26 @@ hadoop jar WithinRatio/WithinRatio.jar WithinRatio fs_data/sample_bwa_no_dup.txt
 hadoop fs -rm -r fs_output/WithinRatioOutControl
 hadoop jar WithinRatio/WithinRatio.jar WithinRatio fs_data/control_bwa_no_dup.txt fs_output/WithinRatioOutControl /tmp/control_reference_median.txt
 
+# COMPUTE COVERAGE
+
+hadoop fs -rm -r fs_data/control_reference_pileup
+
+pig -f Pig/compute_coverage.pig \
+-param sample_input='/Users/onson001/Desktop/hadoop/fs_output/WithinRatioOutSample' \
+-param control_input='/Users/onson001/Desktop/hadoop/fs_output/WithinRatioOutControl' \
+-param output='/Users/onson001/Desktop/hadoop/fs_data/control_reference_pileup'
+
+
 
 -- HERE
-
-#  Find sample/control using the coverage in a) i.e., ratio of ratios (good task for Pig)
-
-
-
 
 
 
 mysql --socket=$BASE/thesock -u root cnv < create_tables_part1.sql
 
-# Combine ratio and bowtie/bwa
-Need a new function here since we do not have the luxury of MySQL joins
+# WE NOW HAVE ALL THE DATA WE NEED FOR SCALING AND NORMALIZING. LOOK AT FIELDS IN
+# cnv_sample_over_control_n_bowtie_bwa_ratio_gene AND PUT THE DATA TOGETHER (LIKELY A PIG OPERATION)
+
 
 # Normalize data
 # a) Find average coverage across genome between 0.5 and 2.0

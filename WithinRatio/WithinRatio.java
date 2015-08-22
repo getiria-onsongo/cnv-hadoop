@@ -75,7 +75,7 @@ public class WithinRatio {
             for (IntWritable value : values) {
                 float ratio;
                 for(int i=0; i<3; i++){
-                    newKey.set(medianCoverage[i][0] + "," + key.toString());
+                    newKey.set(medianCoverage[i][0] + ";" + key.toString());
                     ratio = ((float)value.get() / (float) Integer.parseInt(medianCoverage[i][1]));
                     context.write(newKey,new FloatWritable(ratio));
                 }
