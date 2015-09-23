@@ -63,21 +63,89 @@ cp /Users/onson001/Desktop/hadoop/fs_data/control_reference_median.txt /tmp/cont
 hadoop fs -rm -r fs_output/WithinRatioOutSample
 hadoop jar WithinRatio/WithinRatio.jar WithinRatio fs_data/sample_bwa_no_dup.txt fs_output/WithinRatioOutSample /tmp/sample_reference_median.txt
 
+# Compute within control ratio
 hadoop fs -rm -r fs_output/WithinRatioOutControl
 hadoop jar WithinRatio/WithinRatio.jar WithinRatio fs_data/control_bwa_no_dup.txt fs_output/WithinRatioOutControl /tmp/control_reference_median.txt
 
-# COMPUTE COVERAGE
+# COMPUTE COVERAGE RATIO
 
-hadoop fs -rm -r fs_data/control_reference_pileup
+hadoop fs -rm -r fs_data/coverage_ratio
 
 pig -f Pig/compute_coverage.pig \
 -param sample_input='/Users/onson001/Desktop/hadoop/fs_output/WithinRatioOutSample' \
 -param control_input='/Users/onson001/Desktop/hadoop/fs_output/WithinRatioOutControl' \
--param output='/Users/onson001/Desktop/hadoop/fs_data/control_reference_pileup'
+-param output='/Users/onson001/Desktop/hadoop/fs_data/coverage_ratio'
+
+# COMPUTE BOWTIE/BWA RATIO
+
+hadoop fs -rm -r fs_data/bb_ratio
+
+pig -f Pig/compute_bowtie_bwa.pig \
+-param sample_bowtie_input='/Users/onson001/Desktop/hadoop/fs_data/sample_bowtie.txt' \
+-param sample_bwa_input='/Users/onson001/Desktop/hadoop/fs_data/sample_bwa.txt' \
+-param output='/Users/onson001/Desktop/hadoop/fs_data/bb_ratio'
+
+# ADD gene_symbol TO BOWTIE/BWA RATIO
+
+hadoop fs -rm -r fs_data/bb_ratio_gene
+
+pig -f Pig/combine_bb_ratio_gene_symbol.pig \
+-param sample_bb_ratio_input='/Users/onson001/Desktop/hadoop/fs_data/bb_ratio' \
+-param exon_pileup_input='/Users/onson001/Desktop/hadoop/fs_common_data/tso_exon_contig_pileup.txt' \
+-param output='/Users/onson001/Desktop/hadoop/fs_data/bb_ratio_gene'
 
 
 
--- HERE
+# ----- SEPARATE DATA IN coverage_ratio INTO FIELDS WE CAN JOIN WITH bb_ratio_gene
+
+REGISTER /Users/onson001/Desktop/hadoop/piggybank.jar;
+A = LOAD '/Users/onson001/Desktop/hadoop/fs_data/coverage_ratio' USING PigStorage('\t') AS (chr:chararray, coverage_ratio:float);
+B = FOREACH A GENERATE REPLACE(chr,';',','),coverage_ratio;
+STORE B INTO '/Users/onson001/Desktop/h_test' using PigStorage(',');
+
+C = LOAD '/Users/onson001/Desktop/h_test' USING PigStorage(',') AS (ref_contig:chararray, chr_pos:chararray, coverage_ratio:float);
+D = FOREACH C GENERATE ref_contig, REPLACE(chr_pos,':',','),coverage_ratio;
+STORE D INTO '/Users/onson001/Desktop/h_test_out' using PigStorage(',');
+
+E = LOAD '/Users/onson001/Desktop/h_test_out' USING PigStorage(',') AS (ref_contig:chararray, chr:chararray, pos:int, coverage_ratio:float);
+
+# LOAD bb_ratio_gene SO WE CAN JOIN
+
+F = LOAD '/Users/onson001/Desktop/hadoop/fs_data/bb_ratio_gene' USING PigStorage('\t') AS (chr:chararray,pos:int,bb_ratio:float,gene_symbol:chararray);
+
+# JOIN E and F
+
+G = JOIN E BY (chr,pos), F BY (chr,pos);
+B = FOREACH G GENERATE E::ref_contig AS ref_contig,F::gene_symbol AS gene_symbol,F::chr AS chr,F::pos AS pos,E::coverage_ratio AS coverage_ratio,F::bb_ratio AS bb_ratio;
+
+
+
+pig -f Pig/combine_bb_ratio_gene_coverage.pig \
+-param coverage_ratio_input='/Users/onson001/Desktop/hadoop/fs_data/coverage_ratio' \
+-param bb_ratio_gene_input='/Users/onson001/Desktop/hadoop/fs_data/bb_ratio_gene' \
+-param temp1='/Users/onson001/Desktop/hadoop/fs_data/temp1' \
+-param temp2='/Users/onson001/Desktop/hadoop/fs_data/temp2' \
+-param output='/Users/onson001/Desktop/hadoop/fs_data/combined_data'
+
+
+# ----
+
+(chr17,7573936,1.0,TP53)
+
+
+# NEXT:
+# 1) Compute sample bowtie/bwa : DONE
+# 2) Add bowtie/bwa
+# 3) Add gene_symbol
+# 4) Use PIG to separate the three reference (Could call three separate
+#    pig scripts that take as input master file and one of the references
+#    and outputs data for just that reference
+
+
+
+
+# FIELDS WE NEED: chr,pos, ref_exon_contig_id, A_over_B_ratio, bwa_bowtie_ratio, gene_symbol
+
 
 
 
