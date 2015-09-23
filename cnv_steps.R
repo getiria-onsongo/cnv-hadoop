@@ -96,64 +96,29 @@ pig -f Pig/combine_bb_ratio_gene_symbol.pig \
 
 
 
-# ----- SEPARATE DATA IN coverage_ratio INTO FIELDS WE CAN JOIN WITH bb_ratio_gene
+# ----- COMBINE DATA IN coverage_ratio AND bb_ratio_gene AND SEPARATE THE THREE REFERENCES
 
-REGISTER /Users/onson001/Desktop/hadoop/piggybank.jar;
-A = LOAD '/Users/onson001/Desktop/hadoop/fs_data/coverage_ratio' USING PigStorage('\t') AS (chr:chararray, coverage_ratio:float);
-B = FOREACH A GENERATE REPLACE(chr,';',','),coverage_ratio;
-STORE B INTO '/Users/onson001/Desktop/h_test' using PigStorage(',');
-
-C = LOAD '/Users/onson001/Desktop/h_test' USING PigStorage(',') AS (ref_contig:chararray, chr_pos:chararray, coverage_ratio:float);
-D = FOREACH C GENERATE ref_contig, REPLACE(chr_pos,':',','),coverage_ratio;
-STORE D INTO '/Users/onson001/Desktop/h_test_out' using PigStorage(',');
-
-E = LOAD '/Users/onson001/Desktop/h_test_out' USING PigStorage(',') AS (ref_contig:chararray, chr:chararray, pos:int, coverage_ratio:float);
-
-# LOAD bb_ratio_gene SO WE CAN JOIN
-
-F = LOAD '/Users/onson001/Desktop/hadoop/fs_data/bb_ratio_gene' USING PigStorage('\t') AS (chr:chararray,pos:int,bb_ratio:float,gene_symbol:chararray);
-
-# JOIN E and F
-
-G = JOIN E BY (chr,pos), F BY (chr,pos);
-B = FOREACH G GENERATE E::ref_contig AS ref_contig,F::gene_symbol AS gene_symbol,F::chr AS chr,F::pos AS pos,E::coverage_ratio AS coverage_ratio,F::bb_ratio AS bb_ratio;
-
-
+hadoop fs -rm -r fs_data/temp1
+hadoop fs -rm -r fs_data/temp2
+hadoop fs -rm -r fs_data/ref1
+hadoop fs -rm -r fs_data/ref2
+hadoop fs -rm -r fs_data/ref3
 
 pig -f Pig/combine_bb_ratio_gene_coverage.pig \
 -param coverage_ratio_input='/Users/onson001/Desktop/hadoop/fs_data/coverage_ratio' \
 -param bb_ratio_gene_input='/Users/onson001/Desktop/hadoop/fs_data/bb_ratio_gene' \
 -param temp1='/Users/onson001/Desktop/hadoop/fs_data/temp1' \
 -param temp2='/Users/onson001/Desktop/hadoop/fs_data/temp2' \
--param output='/Users/onson001/Desktop/hadoop/fs_data/combined_data'
+-param output1='/Users/onson001/Desktop/hadoop/fs_data/ref1' \
+-param output2='/Users/onson001/Desktop/hadoop/fs_data/ref2' \
+-param output3='/Users/onson001/Desktop/hadoop/fs_data/ref3'
 
 
-# ----
 
-(chr17,7573936,1.0,TP53)
+
 
 
 # NEXT:
-# 1) Compute sample bowtie/bwa : DONE
-# 2) Add bowtie/bwa
-# 3) Add gene_symbol
-# 4) Use PIG to separate the three reference (Could call three separate
-#    pig scripts that take as input master file and one of the references
-#    and outputs data for just that reference
-
-
-
-
-# FIELDS WE NEED: chr,pos, ref_exon_contig_id, A_over_B_ratio, bwa_bowtie_ratio, gene_symbol
-
-
-
-
-mysql --socket=$BASE/thesock -u root cnv < create_tables_part1.sql
-
-# WE NOW HAVE ALL THE DATA WE NEED FOR SCALING AND NORMALIZING. LOOK AT FIELDS IN
-# cnv_sample_over_control_n_bowtie_bwa_ratio_gene AND PUT THE DATA TOGETHER (LIKELY A PIG OPERATION)
-
 
 # Normalize data
 # a) Find average coverage across genome between 0.5 and 2.0
