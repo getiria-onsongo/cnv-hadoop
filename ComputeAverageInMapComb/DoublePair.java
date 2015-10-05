@@ -1,32 +1,32 @@
-// cc TextIntPair A Writable implementation that stores a TextInt
+// cc DoublePair A Writable implementation that stores a Double
 
 import java.io.*;
 import java.lang.*;
 import org.apache.hadoop.io.*;
 
-public class TextIntPair implements WritableComparable<TextIntPair> {
+public class DoublePair implements WritableComparable<DoublePair> {
 
-  private Text first;
-  private IntWritable second;
+  private DoubleWritable first;
+  private DoubleWritable second;
   
-  public TextIntPair() {
-        set(new Text(), new IntWritable());
+  public DoublePair() {
+        set(new DoubleWritable(), new DoubleWritable());
     }
   
-  public TextIntPair(Text first, IntWritable second) {
+  public DoublePair(DoubleWritable first, DoubleWritable second) {
     set(first, second);
   }
   
-  public void set(Text first, IntWritable second) {
+  public void set(DoubleWritable first, DoubleWritable second) {
     this.first = first;
     this.second = second;
   }
   
-  public Text getFirst() {
+  public DoubleWritable getFirst() {
     return first;
   }
 
-  public IntWritable getSecond() {
+  public DoubleWritable getSecond() {
     return second;
   }
 
@@ -44,16 +44,16 @@ public class TextIntPair implements WritableComparable<TextIntPair> {
   
   @Override
   public int hashCode() {
-    return first.hashCode() * 163 + second.hashCode();
+      return first.hashCode() * 163 + second.hashCode();
   }
   
   @Override
   public boolean equals(Object o) {
-    if (o instanceof TextIntPair) {
-      TextIntPair tp = (TextIntPair) o;
-      return first.equals(tp.first) && second.equals(tp.second);
-    }
-    return false;
+      if (o instanceof DoublePair) {
+          DoublePair tp = (DoublePair) o;
+          return first.equals(tp.first) && second.equals(tp.second);
+      }
+      return false;
   }
 
   @Override
@@ -62,7 +62,7 @@ public class TextIntPair implements WritableComparable<TextIntPair> {
   }
   
   @Override
-  public int compareTo(TextIntPair tp) {
+  public int compareTo(DoublePair tp) {
     int cmp = first.compareTo(tp.first);
     if (cmp != 0) {
       return cmp;
@@ -70,4 +70,4 @@ public class TextIntPair implements WritableComparable<TextIntPair> {
     return second.compareTo(tp.second);
   }
 }
-// ^^ TextIntPair
+// ^^ DoublePair

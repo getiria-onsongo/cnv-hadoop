@@ -113,12 +113,13 @@ pig -f Pig/combine_bb_ratio_gene_coverage.pig \
 -param output2='/Users/onson001/Desktop/hadoop/fs_data/ref2' \
 -param output3='/Users/onson001/Desktop/hadoop/fs_data/ref3'
 
+# OUTPUT FIELDS = ref_contig,gene_symbol,chr,pos,coverage_ratio,bb_ratio
+# ------
+# NOTE: Compile multiple java file (hadoop com.sun.tools.javac.Main *.java)
+# hadoop com.sun.tools.javac.Main ComputeAverage.java
+# jar cf ComputeAverage.jar *.class
+# hadoop jar ComputeAverage/ComputeAverage.jar ComputeAverage fs_data/test1.txt ComputeAverageOut
 
-
-
-
-
-# NEXT:
 
 # Normalize data
 # a) Find average coverage across genome between 0.5 and 2.0
@@ -128,7 +129,19 @@ pig -f Pig/combine_bb_ratio_gene_coverage.pig \
 #           i) normalized_value = 2^(log2(value) - avg_log2)
 # NOTE: Only ratio is normalized
 
-R CMD BATCH normalize_coverage.R
+hadoop jar ComputeAverageInMapComb/ComputeAverageInMapComb.jar ComputeAverageInMapComb fs_data/ref1 /tmp/ref1
+hadoop jar ComputeAverageInMapComb/ComputeAverageInMapComb.jar ComputeAverageInMapComb fs_data/ref2 /tmp/ref2
+hadoop jar ComputeAverageInMapComb/ComputeAverageInMapComb.jar ComputeAverageInMapComb fs_data/ref3 /tmp/ref3
+
+hadoop fs -getmerge /tmp/ref1 /tmp/ref/ref1.txt
+hadoop fs -getmerge /tmp/ref2 /tmp/ref/ref2.txt
+hadoop fs -getmerge /tmp/ref3 /tmp/ref/ref3.txt
+
+hadoop jar NormalizeRatio/NormalizeRatio.jar NormalizeRatio fs_data/ref1 /tmp/ref/ref1.txt fs_data/ref1_norm
+hadoop jar NormalizeRatio/NormalizeRatio.jar NormalizeRatio fs_data/ref2 /tmp/ref/ref2.txt fs_data/ref2_norm
+hadoop jar NormalizeRatio/NormalizeRatio.jar NormalizeRatio fs_data/ref3 /tmp/ref/ref3.txt fs_data/ref3_norm
+
+# START HERE
 
 
 # Rolling mean (window = 200)
