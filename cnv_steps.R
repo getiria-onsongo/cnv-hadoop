@@ -143,13 +143,15 @@ hadoop jar NormalizeRatio/NormalizeRatio.jar NormalizeRatio fs_data/ref3 /tmp/re
 
 # START HERE
 
-javac -classpath ../anc/BigDecimalMath.jar *.java
-java -classpath ../anc/BigDecimalMath.jar:. TestSimpleMovingAverage 3
-
 
 cd /Users/onson001/Desktop/hadoop/MovingAverageExample
 javac *.java
 java TestSimpleMovingAverage 5
+
+
+# NEXT: Create a class that takes in array and uses SimpleMovingAverageUsingArray.java to compute moving average
+# returning an array of moving average values
+
 
 # Rolling mean (window = 200)
 # if(window_length >= gene_length/4)
@@ -250,6 +252,9 @@ hadoop jar TagData/TagData.jar TagData onsongo/temp.txt TagDataOut c
 hadoop fs -ls  TagDataOut
 
 
+# Adding classpath to java
+javac -classpath ../anc/BigDecimalMath.jar *.java
+java -classpath ../anc/BigDecimalMath.jar:. TestSimpleMovingAverage 3
 
 
 
