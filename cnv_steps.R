@@ -143,6 +143,9 @@ hadoop jar NormalizeRatio/NormalizeRatio.jar NormalizeRatio fs_data/ref3 /tmp/re
 
 # START HERE
 
+cd /Users/onson001/Desktop/hadoop/MovingAverageExample
+javac *.java
+java TestSimpleMovingAverage 5
 
 # Rolling mean (window = 200)
 # if(window_length >= gene_length/4)
