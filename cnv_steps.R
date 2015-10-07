@@ -143,6 +143,10 @@ hadoop jar NormalizeRatio/NormalizeRatio.jar NormalizeRatio fs_data/ref3 /tmp/re
 
 # START HERE
 
+javac -classpath ../anc/BigDecimalMath.jar *.java
+java -classpath ../anc/BigDecimalMath.jar:. TestSimpleMovingAverage 3
+
+
 cd /Users/onson001/Desktop/hadoop/MovingAverageExample
 javac *.java
 java TestSimpleMovingAverage 5
