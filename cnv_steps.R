@@ -143,10 +143,9 @@ hadoop jar NormalizeRatio/NormalizeRatio.jar NormalizeRatio fs_data/ref3 /tmp/re
 
 # START HERE
 
-
 cd /Users/onson001/Desktop/hadoop/MovingAverageExample
 javac *.java
-java TestSimpleMovingAverage 5
+java TestSimpleMovingAverage 3
 
 
 # NEXT: Create a class that takes in array and uses SimpleMovingAverageUsingArray.java to compute moving average

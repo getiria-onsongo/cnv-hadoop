@@ -3,6 +3,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.LogManager;
 
+import java.math.BigDecimal;
+
 /** 
  * Basic testing of Simple moving average.
  *
@@ -17,8 +19,9 @@ public class TestSimpleMovingAverage {
     
     public static void main(String[] args) {
 
-        // time series        0   1   2  3   4   5   6    7   8  9
-        double[] testData = {10, 18, 20, 30, 24, 33, 27, 56, 21, 45};
+        // time series        0   1     2     3   4    5    6    7   8    9
+        double[] testData = {0.5, 1.0, 2.0, 0.7, 0.9, 1.25, 0.8, 1.0, 1.25, 0.8};
+       
         arrayLength=testData.length;
         windowSize = Integer.parseInt(args[0]);
         
