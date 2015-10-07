@@ -7,8 +7,8 @@ import java.math.BigDecimal;
  *
  * NOTE: We are using the package org.nevec.rjm to enable us compute in log space using BigDecimal. 
  * Also note, working in log2 space is only advisable when you are dealing with ratios between 0.5 and 2.0
- * if ratios are significantly greater than 2, you will lose a lot of precision. Try computing average in 
- * log2 space for numers such as 10, 18 and 20
+ * i.e., ratios closer to 2. If ratios are significantly greater than 2, you will lose a lot of precision. 
+ * Try computing average in log2 space for numers such as 10, 18 and 20
  */
 public class SimpleMovingAverageUsingArray {
     
