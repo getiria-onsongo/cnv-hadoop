@@ -18,33 +18,20 @@ public class TestSimpleMovingAverage {
     private static int itemsPosition = 0;
     
     public static void main(String[] args) {
-
-        // time series        0   1     2     3   4    5    6    7   8    9
-        double[] testData = {0.5, 1.0, 2.0, 0.7, 0.9, 1.25, 0.8, 1.0, 1.25, 0.8};
-       
-        arrayLength=testData.length;
+        int[] chrpos = {33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65};
+        // time series        0   1     2     3   4    5     6    7    8     9   10  11   12
+        double[] testData = {
+            0.5,1.00,2.0,0.70,0.90,1.25,0.8,1.00,1.25,0.8,1.00,
+            0.8,1.25,0.5,0.80,2.00,1.00,0.5,1.25,2.00,0.8,1.25,
+            0.8,0.80,1.25,1.25,1.25,0.80,1.0,0.80,1.25,1.7,2.00};
         windowSize = Integer.parseInt(args[0]);
         
-        SimpleMovingAverageUsingArray sma = new SimpleMovingAverageUsingArray(windowSize);
-    
-        for (int i=0; i<arrayLength;i++){
-            if(i < ((windowSize + 1)/2)){
-                windowEnd = i + ((i + i)/2);
-                while(itemsPosition <= windowEnd){
-                    sma.addNewNumber(testData[itemsPosition]);
-                    itemsPosition++;
-                }
-                windowEnd = itemsPosition;
-            }else{
-                if(windowEnd >= arrayLength){
-                    sma.removeNumber();
-                }else{
-                    sma.addNewNumber(testData[itemsPosition]);
-                    windowEnd = windowEnd + 1;
-                    itemsPosition = itemsPosition + 1;
-                }
-            }
-            System.out.println("i= " + i + " original value= " + testData[i] + " SMA = " + sma.getMovingAverage());
+        MovingAverageUsingArray initDataStruct = new MovingAverageUsingArray(chrpos,testData,windowSize);
+        double[] smoothedData = initDataStruct.getArrayMovingAverage();
+        System.out.println("");
+        for (int i=0; i<smoothedData.length;i++){
+            System.out.println("counter: " + i + "\t input: "+ testData[i] + "\t avg: " + smoothedData[i]);
         }
+    
     }
 }

@@ -1,3 +1,11 @@
+# Code source:
+# https://github.com/mahmoudparsian/data-algorithms-book
+
+# Fixing excel tab files
+
+tr '\r' '\n' < test_data.txt > test_data_clean.txt
+mv test_data_clean.txt test_data.txt
+
 # Start hadoop
 hstart
 
@@ -146,6 +154,12 @@ hadoop jar NormalizeRatio/NormalizeRatio.jar NormalizeRatio fs_data/ref3 /tmp/re
 cd /Users/onson001/Desktop/hadoop/MovingAverageExample
 javac *.java
 java TestSimpleMovingAverage 3
+
+hadoop com.sun.tools.javac.Main *.java
+jar cf MovingAverage.jar *.class
+cd ..
+hadoop fs -rm -r MovingAverageOut
+hadoop jar MovingAverage/MovingAverage.jar SortByMRF_MovingAverageDriver 3 fs_data/MovingAvgTest  MovingAverageOut
 
 
 # NEXT: Create a class that takes in array and uses SimpleMovingAverageUsingArray.java to compute moving average
