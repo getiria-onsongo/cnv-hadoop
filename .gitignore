@@ -1,3 +1,13 @@
+/Mapping/output/*
+/Mapping/aligned/*
+*.sam
+*.bai
+*.bam
+documentation/*
+fastq/*
+freemarker-2.3.23.tar
+genomes/*
+source/*
 test_data.xlsx
 MovingAverageOut/*
 anc/*

@@ -175,6 +175,31 @@ hadoop jar MovingAverage/MovingAverage.jar SortByMRF_MovingAverageDriver 3 fs_da
 R CMD BATCH smooth_coverage.R
 
 
+# Mapping 
+hadoop com.sun.tools.javac.Main -cp ../freemarker.jar TemplateEngine.java
+
+
+HADOOP_HOME=/usr/local/Cellar/hadoop/2.6.0
+
+hadoop fs -rm -r output
+
+hadoop fs -rm -r aligned
+
+sh create_dir.sh
+
+hadoop jar $HADOOP_HOME/libexec/share/hadoop/tools/lib/hadoop-streaming-2.6.0.jar \
+-D mapred.reduce.tasks=0 \
+-D mapred.map.tasks.speculative.execution=false \
+-D mapred.task.timeout=86400000 \
+-input sample_fastq.txt \
+-inputformat org.apache.hadoop.mapred.lib.NLineInputFormat \
+-output output \
+-mapper map.sh \
+-file map.sh
+
+
+
+
 *** PLOT TO SEE IF EVERYTHING IS WORKING
 
 
