@@ -1,3 +1,6 @@
+/Mapping/test/*
+/Mapping/fastq/*
+/Mapping/files/*
 /Mapping/output/*
 /Mapping/aligned/*
 *.sam
