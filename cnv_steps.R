@@ -175,11 +175,37 @@ hadoop jar MovingAverage/MovingAverage.jar SortByMRF_MovingAverageDriver 3 fs_da
 R CMD BATCH smooth_coverage.R
 
 
-# Mapping 
+# Star of Mapping
 hadoop com.sun.tools.javac.Main -cp ../freemarker.jar TemplateEngine.java
 
 
 HADOOP_HOME=/usr/local/Cellar/hadoop/2.6.0
+
+# Split fastq files
+
+cd split
+
+hadoop fs -rm -r fastq
+
+hadoop jar $HADOOP_HOME/libexec/share/hadoop/tools/lib/hadoop-streaming-2.6.0.jar \
+-D mapred.reduce.tasks=0 \
+-D mapred.map.tasks.speculative.execution=false \
+-D mapred.task.timeout=86400000 \
+-input fastq_files.txt \
+-inputformat org.apache.hadoop.mapred.lib.NLineInputFormat \
+-cmdenv number_reads=10000 \
+-cmdenv RESULTS_PATH="/Users/onson001/Desktop/hadoop/Mapping/split/fastq" \
+-cmdenv fastqPath="/Users/onson001/Desktop/hadoop/fastq" \
+-cmdenv filePath="/Users/onson001/Desktop/hadoop/Mapping/split/files" \
+-output fastq \
+-mapper split_fastq.sh \
+-file split_fastq.sh
+
+cd files
+
+cat $(find  . -name "*.txt"  -type f) > file_list.txt
+
+# Align
 
 hadoop fs -rm -r output
 
@@ -196,20 +222,6 @@ hadoop jar $HADOOP_HOME/libexec/share/hadoop/tools/lib/hadoop-streaming-2.6.0.ja
 -output output \
 -mapper map.sh \
 -file map.sh
-
-
-hadoop jar $HADOOP_HOME/libexec/share/hadoop/tools/lib/hadoop-streaming-2.6.0.jar \
--D mapred.reduce.tasks=0 \
--D mapred.map.tasks.speculative.execution=false \
--D mapred.task.timeout=86400000 \
--input test.txt \
--inputformat org.apache.hadoop.mapred.lib.NLineInputFormat \
--cmdenv number_reads=4 \
--cmdenv RESULTS_PATH="/Users/onson001/Desktop/hadoop/Mapping/fastq" \
--cmdenv filePath="/Users/onson001/Desktop/hadoop/Mapping/files" \
--output output \
--mapper split_fastq.sh \
--file split_fastq.sh
 
 
 

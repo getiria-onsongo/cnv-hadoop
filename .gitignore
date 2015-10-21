@@ -1,3 +1,4 @@
+Mapping/split/*
 *.fastq
 /Mapping/test/*
 /Mapping/fastq/*
