@@ -1,3 +1,4 @@
+*.fastq
 /Mapping/test/*
 /Mapping/fastq/*
 /Mapping/files/*

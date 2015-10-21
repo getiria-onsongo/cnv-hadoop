@@ -1,23 +1,16 @@
 #!/usr/bin/env bash
 
-# read offset fileLine
+read offset fileLine
 
-# SampleName=$(echo "$fileLine" | cut -f1)
-# s_S1_R1=$(echo "$fileLine" | cut -f2)
-# s_S1_R2=$(echo "$fileLine" | cut -f3)
+SampleName=$(echo "$fileLine" | cut -f1)
+forward_file=$(echo "$fileLine" | cut -f2)
+reverse_file=$(echo "$fileLine" | cut -f3)
 
-file=/Users/onson001/Desktop/hadoop/Mapping/test.txt
-RESULTS_PATH=/Users/onson001/Desktop/hadoop/Mapping/fastq
-filePath=/Users/onson001/Desktop/hadoop/Mapping/files
-
-numLines=3
-SampleName="test"
+numLines=$(($number_reads * 4))
 
 forward_reads=forwards_reads.txt
 reverse_reads=reverse_reads.txt
 
-forward_file=/Users/onson001/Desktop/hadoop/Mapping/test_R1.txt
-reverse_file=/Users/onson001/Desktop/hadoop/Mapping/test_R2.txt
 
 # Split forward reads
 fileNumber=0

@@ -198,6 +198,20 @@ hadoop jar $HADOOP_HOME/libexec/share/hadoop/tools/lib/hadoop-streaming-2.6.0.ja
 -file map.sh
 
 
+hadoop jar $HADOOP_HOME/libexec/share/hadoop/tools/lib/hadoop-streaming-2.6.0.jar \
+-D mapred.reduce.tasks=0 \
+-D mapred.map.tasks.speculative.execution=false \
+-D mapred.task.timeout=86400000 \
+-input test.txt \
+-inputformat org.apache.hadoop.mapred.lib.NLineInputFormat \
+-cmdenv number_reads=4 \
+-cmdenv RESULTS_PATH="/Users/onson001/Desktop/hadoop/Mapping/fastq" \
+-cmdenv filePath="/Users/onson001/Desktop/hadoop/Mapping/files" \
+-output output \
+-mapper split_fastq.sh \
+-file split_fastq.sh
+
+
 
 
 *** PLOT TO SEE IF EVERYTHING IS WORKING
