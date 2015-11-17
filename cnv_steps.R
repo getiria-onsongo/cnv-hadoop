@@ -1,3 +1,58 @@
+
+hadoop fs -rm -r fastq
+
+hadoop fs -mkdir fastq
+
+sh SplitFastqSingleNode.sh input.txt fastq 10000 heart
+
+hadoop com.sun.tools.javac.Main BwaMapping.java
+jar cf BwaMapping.jar *.class
+hadoop jar BwaMapping.jar BwaMapping heart BwaMappingOut "genomes/bwa.tar.gz" "fastq"
+
+
+
+** 2) Look at samples that did not pass and have at least 3 windows to see what is happening.
+** 3) Look at googles free machine learning package.
+** 1) Run the CNV pipeline on exome data with one sample as control and the rest as samples.
+**** Translocation detection
+**** Reducing windows to 1
+
+cd /Users/onson001/Desktop/hadoop/dev
+hstart
+cp /Users/onson001/Desktop/hadoop/Mapping/BwaMapping/dev/BwaMapping.java .
+
+hadoop fs -rm -r genomes
+hadoop fs -mkdir genomes
+hadoop fs -put /Users/onson001/Desktop/hadoop/genomes/bwa.tar.gz genomes/bwa.tar.gz
+
+hadoop fs -rm -r fastq
+hadoop fs -mkdir fastq
+sh SplitFastqSingleNode.sh input.txt fastq 10000
+
+sh SplitFastqSingleNode.sh heart-1 heart-1_R1.fastq heart-1_R2.fastq 10000 fastq
+
+hadoop com.sun.tools.javac.Main BwaMapping.java
+jar cf BwaMapping.jar *.class
+hadoop jar BwaMapping.jar BwaMapping "fastq/heart-1_files.txt" BwaMappingOut "genomes/bwa.tar.gz" "fastq"
+
+hadoop com.sun.tools.javac.Main Test.java
+jar cf Test.jar *.class
+hadoop jar Test.jar Test "fastq/fastq_files.txt" TestOut "fastq"
+
+
+
+
+
+
+
+
+
+
+
+# NEXT:
+# 1) TEST MAPPING ON MSI
+# 2) COMBINE SAM FILES INTO ONE FILE.
+
 # Code source:
 # https://github.com/mahmoudparsian/data-algorithms-book
 
@@ -183,20 +238,24 @@ HADOOP_HOME=/usr/local/Cellar/hadoop/2.6.0
 
 # Split fastq files
 
+isub -m 8gb -w 1:00:00
+
 cd split
+
+module load pig
 
 hadoop fs -rm -r fastq
 
-hadoop jar $HADOOP_HOME/libexec/share/hadoop/tools/lib/hadoop-streaming-2.6.0.jar \
+hadoop jar /soft/hadoop/1.2.1/contrib/streaming/hadoop-streaming-1.2.1.jar \
 -D mapred.reduce.tasks=0 \
 -D mapred.map.tasks.speculative.execution=false \
 -D mapred.task.timeout=86400000 \
 -input fastq_files.txt \
 -inputformat org.apache.hadoop.mapred.lib.NLineInputFormat \
--cmdenv number_reads=10000 \
--cmdenv RESULTS_PATH="/Users/onson001/Desktop/hadoop/Mapping/split/fastq" \
--cmdenv fastqPath="/Users/onson001/Desktop/hadoop/fastq" \
--cmdenv filePath="/Users/onson001/Desktop/hadoop/Mapping/split/files" \
+-cmdenv number_reads=3000000 \
+-cmdenv RESULTS_PATH="fastq" \
+-cmdenv fastqPath="raw_fastq" \
+-cmdenv filePath="files" \
 -output fastq \
 -mapper split_fastq.sh \
 -file split_fastq.sh
@@ -222,6 +281,101 @@ hadoop jar $HADOOP_HOME/libexec/share/hadoop/tools/lib/hadoop-streaming-2.6.0.ja
 -output output \
 -mapper map.sh \
 -file map.sh
+
+hadoop jar /panfs/roc/itascasoft/hadoop/2.7.1/share/hadoop/tools/lib/hadoop-streaming-2.7.1.jar
+-input /groups/riss/onson001/split/fastq_files.txt \
+-inputformat org.apache.hadoop.mapred.lib.NLineInputFormat
+-cmdenv number_reads=3000000 \
+-cmdenv RESULTS_PATH="/groups/riss/onson001/split/fastq" \
+-cmdenv fastqPath="/groups/riss/onson001/split/raw_fastq" \
+-cmdenv filePath="/groups/riss/onson001/split/files" \
+-output /groups/riss/onson001/split/output \
+-mapper /scratch.global/onson001/split/split_fastq.sh
+-file /scratch.global/onson001/split/split_fastq.sh
+
+
+hadoop fs -rm -r /groups/riss/onson001/split
+
+hadoop fs -put split /groups/riss/onson001/split
+hadoop fs -put test.fastq /groups/riss/onson001/split/test.fastq
+hadoop fs -rm -r /groups/riss/onson001/split/test.sh
+hadoop fs -put test.sh /groups/riss/onson001/split/test.sh
+hadoop fs -ls /groups/riss/onson001/split/test.fastq
+
+hadoop fs -rm -r /groups/riss/onson001/split/fastq_files.txt
+hadoop fs -put fastq_files.txt /groups/riss/onson001/split/fastq_files.txt
+
+cd split
+
+-file "/home/msistaff/onson001/split/11-05910_R1.fastq" \
+-file "/home/msistaff/onson001/split/11-05910_R2.fastq" \
+-cmdenv R1="/home/msistaff/onson001/split/11-05910_R1.fastq#R1" \
+-cmdenv R2="/home/msistaff/onson001/split/11-05910_R2.fastq" \
+
+/groups/riss/onson001/split/test.fastq,
+
+
+
+# --------------------
+# Note. The generic options (e.g., -files) must be specified before the streaming options.
+
+ssh mesabi
+
+module load hadoop/2.7.1
+
+hadoop fs -rm -r /groups/riss/onson001/split/output
+
+hadoop jar /panfs/roc/itascasoft/hadoop/2.7.1/share/hadoop/tools/lib/hadoop-streaming-2.7.1.jar \
+-files "test.sh,11-05910_R1.fastq,forward.txt" \
+-numReduceTasks 0 \
+-cmdenv R1="11-05910_R1.fastq" \
+-cmdenv forward="forward.txt" \
+-inputformat org.apache.hadoop.mapred.lib.NLineInputFormat \
+-mapper test.sh \
+-input /groups/riss/onson001/split/fastq_files.txt \
+-output /groups/riss/onson001/split/output
+
+hadoop fs -put test.txt  /hdfs/onson001/test.txt >&2 || { echo "put failed" >&2; exit 1; }
+
+"hadoop fs -ls /groups/riss/onson001/split/*"
+
+hadoop fs -cat /groups/riss/onson001/split/output/part-00000
+
+                                          
+
+
+                                          
+                                          
+                                          
+                                          
+                                          
+                                          
+                                          
+                                          
+                                          
+                                          
+                                          
+                                          
+                                          
+                                          
+                                          
+                                          
+                                          
+                                          
+
+
+
+
+
+
+
+/home/thyagara/data_release/umgc/hiseq/131202_700506R_0311_AH79LPADXX/Project_UMGC_Project_147
+
+
+
+
+
+
 
 
 
